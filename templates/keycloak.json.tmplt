@@ -1,0 +1,8 @@
+{
+    "CN": "keycloak",
+    "hosts": ["__KEYCLOAK_ADDRESS__"],
+    "key": {
+        "algo": "ecdsa",
+        "size": 256
+    }
+}

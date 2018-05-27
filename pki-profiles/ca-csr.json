@@ -1,0 +1,7 @@
+{
+    "CN": "keycloakca",
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    }
+}

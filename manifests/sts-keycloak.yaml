@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+      component: keycloak
+  serviceName: keycloak
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: keycloak
+        component: keycloak
+    spec:
+      containers:
+      - name: keycloak
+        image: jboss/keycloak:3.4.3.Final
+        imagePullPolicy: IfNotPresent
+        command: [ "/scripts/keycloak.sh" ]
+        env:
+        - name: KEYCLOAK_USER
+          value: keycloak
+        - name: KEYCLOAK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: keycloak-admin-user
+        - name: POSTGRES_PORT_5432_TCP_ADDR
+          value: postgresql
+        - name: POSTGRES_USER
+          value: keycloak
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: postgresql
+        - name: POSTGRES_DATABASE
+          value: keycloak
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /auth/
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /auth/
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        volumeMounts:
+        - mountPath: /scripts
+          name: scripts
+      initContainers:
+      - name: wait-for-postgresql
+        image: alpine:3.6
+        imagePullPolicy: IfNotPresent
+        command:
+        - sh
+        - -c
+        - |
+          until printf "." && nc -z -w 2 postgresql 5432; do
+          sleep 2;
+          done;
+
+          echo 'PostgreSQL OK ✓'
+      restartPolicy: Always
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      terminationGracePeriodSeconds: 60
+      volumes:
+      - configMap:
+          defaultMode: 365
+          name: keycloak
+        name: scripts

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+    component: keycloak
+data:
+  keycloak.cli: |
+    embed-server --std-out=echo
+    # Makes node identifier unique getting rid of a warning in the logs
+    /subsystem=transactions:write-attribute(name=node-identifier, value=${jboss.node.name})
+    # Allow log level to be configured via environment variable
+    /subsystem=logging/console-handler=CONSOLE:write-attribute(name=level, value=${env.WILDFLY_LOGLEVEL:INFO})
+    /subsystem=logging/root-logger=ROOT:write-attribute(name=level, value=${env.WILDFLY_LOGLEVEL:INFO})
+    # Log only to console
+    /subsystem=logging/root-logger=ROOT:write-attribute(name=handlers, value=[CONSOLE])
+    /socket-binding-group=standard-sockets/socket-binding=proxy-https:add(port=443)
+    /subsystem=undertow/server=default-server/http-listener=default:write-attribute(name=redirect-socket, value=proxy-https)
+    /subsystem=undertow/server=default-server/http-listener=default:write-attribute(name=proxy-address-forwarding, value=true)
+    stop-embedded-server
+  keycloak.sh: |
+    #!/usr/bin/env bash
+    set -eu
+    /opt/jboss/keycloak/bin/jboss-cli.sh --file=/scripts/keycloak.cli
+    exec /opt/jboss/docker-entrypoint.sh -b 0.0.0.0
+    exit "$?"
+
+

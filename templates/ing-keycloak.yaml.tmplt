@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+    component: keycloak
+spec:
+  rules:
+  - host: __KEYCLOAK_ADDRESS__
+    http:
+      paths:
+      - backend:
+          serviceName: keycloak
+          servicePort: http
+        path: /
+  tls:
+  - hosts:
+      - __KEYCLOAK_ADDRESS__
+    secretName: keycloak-cert
