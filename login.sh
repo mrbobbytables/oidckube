@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -e
+set -o pipefail
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 [[ ! -f "$DIR/config" ]] && cp "$DIR/config.example" "$DIR/config" 
 
@@ -29,11 +32,14 @@ install_jq() {
 get_creds() {
   echo "Please input your credentials for https://$KEYCLOAK_ADDRESS/auth/realms/$KEYCLOAK_AUTH_REALM"
   if [ "$KEYCLOAK_USERNAME" = "" ];then
-	  read -rp "user: " KEYCLOAK_USERNAME
+	  read -rp "email: " KEYCLOAK_USERNAME
   fi
   if [ "$KEYCLOAK_PASSWORD" = "" ];then
-	  read -rsp "pass: " KEYCLOAK_PASSWORD
+	  read -rsp "password: " KEYCLOAK_PASSWORD
     echo
+  fi
+  if [ "$KEYCLOAK_TOTP" = "" ]; then
+    read -rp "TOTP [enter to skip]: " KEYCLOAK_TOTP
   fi
 }
 
@@ -48,7 +54,8 @@ get_token() {
     -d client_id="$KEYCLOAK_CLIENT_ID" \
     -d client_secret="$KEYCLOAK_CLIENT_SECRET" \
     -d username="$KEYCLOAK_USERNAME" \
-    -d password="$KEYCLOAK_PASSWORD")
+    -d password="$KEYCLOAK_PASSWORD" \
+    -d totp="$KEYCLOAK_TOTP")
 
   ERROR=$(echo "$TOKEN" | jq .error -r)
   if [ "$ERROR" != "null" ];then
