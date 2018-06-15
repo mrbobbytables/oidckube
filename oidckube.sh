@@ -34,7 +34,7 @@ install_cfssl() {
 init_pki() {
   echo "[$(date)][INFO] Generating Certificates."
   sed -e "s|__KEYCLOAK_ADDRESS__|$KEYCLOAK_ADDRESS|g" \
-  "$TEMPLATE_DIR/keycloak.json.tmplt" > "$PKI_PROFILE_DIR/keycloak.json"
+    "$TEMPLATE_DIR/keycloak.json.tmplt" > "$PKI_PROFILE_DIR/keycloak.json"
 
   cfssl gencert -initca "$PKI_PROFILE_DIR/ca-csr.json" | cfssljson -bare "$PKI_DIR/keycloak-ca" -
   cfssl gencert \
@@ -53,14 +53,11 @@ init_minikube() {
   init_keycloak
   local instance_ip
   instance_ip="$(minikube ip)"
-  while   [ "$(kubectl get statefulset keycloak --template='{{.status.readyReplicas}}')" != "1" ]; do
-     echo "[$(date)][INFO] Waiting for Keycloak to become ready."
-     sleep 10
+  while [ "$(kubectl get statefulset keycloak --template='{{.status.readyReplicas}}')" != "1" ]; do
+    echo "[$(date)][INFO] Waiting for Keycloak to become ready."
+    sleep 10
   done
-  echo "[$(date)][INFO] Keycloak Ready."
-  echo "[$(date)][INFO] Shutting down minikube."
-  minikube stop
-  VBoxManage modifyvm minikube --natdnshostresolver1 on
+  echo "[$(date)][INFO] Keycloak Deployed."
   echo "[$(date)][INFO] Add entry in /etc/hosts file before starting."
   echo "[$(date)][INFO] $instance_ip  $KEYCLOAK_ADDRESS"
 }
@@ -73,21 +70,22 @@ inject_keycloak_certs() {
 
 init_keycloak() {
   sed -e "s|__KEYCLOAK_ADDRESS__|$KEYCLOAK_ADDRESS|g" \
-  "$TEMPLATE_DIR/ing-keycloak.yaml.tmplt" > "$MANIFEST_DIR/ing-keycloak.yaml"
+    "$TEMPLATE_DIR/ing-keycloak.yaml.tmplt" > "$MANIFEST_DIR/ing-keycloak.yaml"
   kubectl create secret tls keycloak-cert --cert="$PKI_DIR/keycloak.pem" --key="$PKI_DIR/keycloak-key.pem"
   kubectl create -f manifests/
 }
 
 start_minikube() {
+  VBoxManage modifyvm minikube --natdnshostresolver1 on
   minikube start \
-  --extra-config=kubelet.serialize-image-pulls=false \
-  --extra-config=apiserver.oidc-issuer-url=https://$KEYCLOAK_ADDRESS/auth/realms/$KEYCLOAK_AUTH_REALM \
-  --extra-config=apiserver.oidc-client-id=$KEYCLOAK_CLIENT_ID \
-  --extra-config=apiserver.oidc-username-claim=email \
-  --extra-config=apiserver.oidc-username-prefix="oidc:" \
-  --extra-config=apiserver.oidc-groups-claim=groups \
-  --extra-config=apiserver.oidc-groups-prefix="oidc:" \
-  --extra-config=apiserver.oidc-ca-file=/var/lib/localkube/certs/keycloak-ca.pem
+    --extra-config=kubelet.serialize-image-pulls=false \
+    --extra-config=apiserver.oidc-issuer-url=https://$KEYCLOAK_ADDRESS/auth/realms/$KEYCLOAK_AUTH_REALM \
+    --extra-config=apiserver.oidc-client-id=$KEYCLOAK_CLIENT_ID \
+    --extra-config=apiserver.oidc-username-claim=email \
+    --extra-config=apiserver.oidc-username-prefix="oidc:" \
+    --extra-config=apiserver.oidc-groups-claim=groups \
+    --extra-config=apiserver.oidc-groups-prefix="oidc:" \
+    --extra-config=apiserver.oidc-ca-file=/var/lib/localkube/certs/keycloak-ca.pem
 }
 
 main() {

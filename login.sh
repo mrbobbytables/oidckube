@@ -14,7 +14,7 @@ BIN_DIR="$DIR/bin"
 PATH=$PATH:$BIN_DIR
 
 install_jq() {
- command -v jq >/dev/null 2>&1 && return 0
+  command -v jq >/dev/null 2>&1 && return 0
   echo "[$(date)][WARNING] jq not found in path. Attempting to fetch."
   local jq_url="https://github.com/stedolan/jq/releases/download/jq-$JQ_RELEASE/"
   if echo "$OSTYPE" | grep -q "darwin"; then
@@ -75,10 +75,10 @@ set_creds() {
     --auth-provider=oidc \
     --auth-provider-arg=idp-certificate-authority="$DIR/pki/keycloak-ca.pem" \
     --auth-provider-arg=idp-issuer-url="https://$KEYCLOAK_ADDRESS/auth/realms/$KEYCLOAK_AUTH_REALM" \
-  	--auth-provider-arg=client-id="$KEYCLOAK_CLIENT_ID" \
-  	--auth-provider-arg=client-secret="$KEYCLOAK_CLIENT_SECRET" \
-  	--auth-provider-arg=id-token="$id_token" \
-  	--auth-provider-arg=refresh-token="$refresh_token"
+    --auth-provider-arg=client-id="$KEYCLOAK_CLIENT_ID" \
+    --auth-provider-arg=client-secret="$KEYCLOAK_CLIENT_SECRET" \
+    --auth-provider-arg=id-token="$id_token" \
+    --auth-provider-arg=refresh-token="$refresh_token"
 }
 
 main() {
