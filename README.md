@@ -32,37 +32,39 @@ by both `oidckube.sh` and `login.sh` to configure and authenticate to Keycloak.
 Keycloak, and configure minikube to use the Host's DNS resolver.
 3. Modify your system's `/etc/hosts` file with the information printed out from the previous step. This will allow 
 both your host and minikube instance to reference the `KEYCLOAK_ADDRESS`.
-4. Run `./oidckube.sh start` to start the minikube instance up with the generated OIDC config.
-5. Login to keycloak administrator portal by going to `https://<KEYCLOAK_ADDRESS>` e.g. `https://keycloak.devlocal`,
+4. Login to keycloak administrator portal by going to `https://<KEYCLOAK_ADDRESS>` e.g. `https://keycloak.devlocal`,
 and use the credentials `keycloak` / `keycloak` **NOTE:** Keycloak takes a few moments to start after minikube comes up
 and may not be immediately accessible once booted.
-6. Create a new auth realm using the same name as defined in the `KEYCLOAK_AUTH_REALM` config. **NOTE:** If you are
+5. Create a new auth realm using the same name as defined in the `KEYCLOAK_AUTH_REALM` config. **NOTE:** If you are
 using the default config, at this time you may import the `k8s-realm-example.json` to skip the group and client
 configuration (you will however have to generate a new client secret). For the import, select only `Import groups`, 
 `Import clients`, and `Import client roles`, then set it to `skip` if the resource already exists.
-7. Navigate to the `clients` section and create a new client.
-8. Give it the same name as defined in the `KEYCLOAK_CLIENT_ID` config.
-9. At the new client configuration page, If you'd like to change the Authorization type from `Public` to `Confidential`
+6. Navigate to the `clients` section and create a new client.
+7. Give it the same name as defined in the `KEYCLOAK_CLIENT_ID` config.
+8. At the new client configuration page, If you'd like to change the Authorization type from `Public` to `Confidential`
 change the `Access Type` to be `confidential`, and configure the `Valid Redirect URI` to be
 `https://<KEYCLOAK_ADDRESS>/*`. Then press `Save`. Otherwise, you may leave it as is. If you did change it to
 `Confidential`, click on the Credentials Tab and generate a new secret, then copy the Secret and update the config file
 setting `KEYCLOAK_CLIENT_SECRET` to the newly generated value.
-10. Click on the `Mappers` Tab and then `Create`.
-11. Call this new mapping `groups`, set the `Mapper Type` to `Group Membership` and `Token Claim Name` to `groups`,
+9. Click on the `Mappers` Tab and then `Create`.
+10. Call this new mapping `groups`, set the `Mapper Type` to `Group Membership` and `Token Claim Name` to `groups`,
 then save.
-12. Add a second Mapping, called `email_verified`. Set the `Mapper Type` to `Hardcoded claim`, the `Token Claim Name`
+11. Add a second Mapping, called `email_verified`. Set the `Mapper Type` to `Hardcoded claim`, the `Token Claim Name`
 to `email_verified`, `Claim value` to `true`, and `Claim JSON Type` to `boolean`. This is **ONLY** required in
 versions of Kubernetes less than 1.11. For information regarding this claim, see this Github Issue:
 [kubernetes/kubernetes#59496](https://github.com/kubernetes/kubernetes/issues/59496).
-13. Navigate to the `Groups` section and create 2 new groups: `cluster-users` and `cluster-admins`. These map to the
+12. Navigate to the `Groups` section and create 2 new groups: `cluster-users` and `cluster-admins`. These map to the
 cluster role bindings created during initialization (`manifests/crb-users.yaml` and `manifests/crb-admins.yaml`).
-14. Goto `Users` and create two new users giving them fake emails e.g. `admin@keycloak.devlocal` and 
+13. Goto `Users` and create two new users giving them fake emails e.g. `admin@keycloak.devlocal` and 
 `user@keycloak.devlocal`, assigning them a password under the `Credentials` tab, and lastly add one to each of the
 groups created in the previous step. At this point, Keycloak is now configured. **NOTE:** If you would like to
 assign the user an optional TOTP, you may impersonate them from the `Users` view and configure their `Authenticator`.
-15. Run `./login.sh`. It will prompt you for a username, password and an optional TOTP code. Use the email address of
+14. Shut down the VM with `./oidckube.sh stop`. This is needed to reconfigure the `kube-apiserver`.
+15. Run `./oidckube.sh start` to start the minikube instance up with the generated OIDC config. Give it time to fully
+boot up.
+16. Run `./login.sh`. It will prompt you for a username, password and an optional TOTP code. Use the email address of
 one of the accounts created earlier. the `./login.sh` script will add the user automatically to your kube config.
-16. Create a new context using the newly added account. e.g:
+17. Create a new context using the newly added account. e.g:
 ```
 $ kubectl config set-context oidckube-user --cluster=minikube --user=user@keycloak.devlocal --namespace=default
 <or>
@@ -70,5 +72,5 @@ $ kubectl config set-context oidckube-admin --cluster=minikube --user=admin@keyc
 ```
 Both the instance of minikube and your local client should be configured to use oidc for server authentication.
 The cluster role bindings map the group `cluster-users` to the `view` cluster role, and `cluster-admins` to the
-cluster-admin` role.
+`cluster-admin` role.
 
