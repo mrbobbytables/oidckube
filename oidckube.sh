@@ -64,7 +64,7 @@ init_minikube() {
 
 inject_keycloak_certs() {
   tar -c -C "$PKI_DIR" keycloak-ca.pem | ssh -t -q -o StrictHostKeyChecking=no \
-    -i "$(minikube ssh-key)" "docker@$(minikube ip)" 'sudo tar -x --no-same-owner -C /var/lib/localkube/certs'
+    -i "$(minikube ssh-key)" "docker@$(minikube ip)" 'sudo tar -x --no-same-owner -C /var/lib/minikube/certs'
 
 }
 
@@ -85,7 +85,7 @@ start_minikube() {
     --extra-config=apiserver.oidc-username-prefix="oidc:" \
     --extra-config=apiserver.oidc-groups-claim=groups \
     --extra-config=apiserver.oidc-groups-prefix="oidc:" \
-    --extra-config=apiserver.oidc-ca-file=/var/lib/localkube/certs/keycloak-ca.pem
+    --extra-config=apiserver.oidc-ca-file=/var/lib/minikube/certs/keycloak-ca.pem
 }
 
 main() {
