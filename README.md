@@ -12,7 +12,8 @@ Management tool as an Authentication Source. The Keycloak manifests are based of
 * [cfssl and cfssljson](https://pkg.cfssl.org/)
 * [jq](https://stedolan.github.io/jq/download/)
 
-**NOTE:** This script only supports Virtualbox as the virtualization provider for minikube. If the cfssl and jq 
+**NOTE:** This script only supports Virtualbox as the virtualization provider for minikube 
+(use `minikube config set vm-driver virtualbox` to override). If the cfssl and jq 
 requirements are not found, it will attempt to download and install them locally into the `bin` sub-directory.
 
 ## Usage
